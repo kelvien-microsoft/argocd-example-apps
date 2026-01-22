@@ -1,0 +1,46 @@
+name: package-helm-chart
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'helm-guestbook/**'
+  
+  workflow_dispatch:
+
+jobs:
+  package-helm-chart:
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Set environment variables
+        id: set-variables
+        run: |
+          echo "VERSION=$(yq -r .version ./helm-guestbook/Chart.yaml)" >> "$GITHUB_OUTPUT"
+
+      - name: Env variable output
+        id: test-variables
+        run: |
+          echo ${{ steps.set-variables.outputs.VERSION }}
+
+      - uses: azure/login@v2.3.0
+        name: Azure login
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: "true"
+
+      - name: Package and push helm chart
+        run: |
+          helm registry login ${{ vars.ACR_URL }} --username ${{ secrets.ACR_USERNAME }} --password ${{ secrets.ACR_PASSWORD }}
+          helm package ./charts/aks-store-demo --version ${{ steps.set-variables.outputs.VERSION }}
+          helm push ./helm-guestbook-${{ steps.set-variables.outputs.VERSION }}.tgz oci://${{ vars.ACR_URL }}/charts
