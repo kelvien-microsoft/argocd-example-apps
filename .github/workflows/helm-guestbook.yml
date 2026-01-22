@@ -42,7 +42,7 @@ jobs:
       - name: Helm Publish Action
         uses: huggingface/helm-publish-action@latest
         with:
-          repository: https://khidayatacr202512.azurecr.io
+          repository: oci://${{ vars.ACR_URL }}/charts
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
           beforeHook: helm package ./helm-guestbook --version ${{ steps.set-variables.outputs.VERSION }}
