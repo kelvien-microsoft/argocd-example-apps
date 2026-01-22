@@ -39,9 +39,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: "true"
 
-      - name: Package and push helm chart
-        run: |
-          P=${{ secrets.ACR_PASSWORD }}
-          P | helm registry login ${{ vars.ACR_URL }} --username ${{ secrets.ACR_USERNAME }} --password-stdin
-          helm package ./charts/aks-store-demo --version ${{ steps.set-variables.outputs.VERSION }}
-          helm push ./helm-guestbook-${{ steps.set-variables.outputs.VERSION }}.tgz oci://${{ vars.ACR_URL }}/charts
+      - name: Helm Publish Action
+        uses: huggingface/helm-publish-action@latest
+        with:
+          repository: https://khidayatacr202512.azurecr.io/charts
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+          beforeHook: helm package ./helm-guestbook --version ${{ steps.set-variables.outputs.VERSION }}
